@@ -17,7 +17,8 @@ interface CommentThreadProps {
   onUpdate: () => void
 }
 
-export function CommentThread({ issueId, comments, currentUser, users, onUpdate }: CommentThreadProps) {
+export function CommentThread({ issueId, comments: initialComments, currentUser, users, onUpdate }: CommentThreadProps) {
+  const [comments, setComments] = useState(initialComments)
   const [newComment, setNewComment] = useState('')
   const [posting, setPosting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -29,13 +30,24 @@ export function CommentThread({ issueId, comments, currentUser, users, onUpdate 
     setPosting(true)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from('comments')
       .insert({
         issue_id: issueId,
         author_id: currentUser.id,
         body: newComment.trim(),
       })
+      .select()
+      .single()
+
+    if (!error && data) {
+      // Add the new comment with author info
+      const newCommentWithAuthor: CommentWithAuthor = {
+        ...data,
+        author: currentUser,
+      }
+      setComments([...comments, newCommentWithAuthor])
+    }
 
     setNewComment('')
     setPosting(false)
@@ -51,10 +63,18 @@ export function CommentThread({ issueId, comments, currentUser, users, onUpdate 
     if (!editText.trim() || !editingId) return
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('comments')
       .update({ body: editText.trim() })
       .eq('id', editingId)
+
+    if (!error) {
+      setComments(comments.map(c =>
+        c.id === editingId
+          ? { ...c, body: editText.trim(), updated_at: new Date().toISOString() }
+          : c
+      ))
+    }
 
     setEditingId(null)
     setEditText('')
@@ -64,12 +84,18 @@ export function CommentThread({ issueId, comments, currentUser, users, onUpdate 
   const deleteComment = async (commentId: string) => {
     if (!confirm('Delete this comment?')) return
 
+    const previousComments = comments
+    setComments(comments.filter(c => c.id !== commentId))
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('comments')
       .delete()
       .eq('id', commentId)
 
+    if (error) {
+      setComments(previousComments)
+    }
     onUpdate()
   }
 
@@ -108,7 +134,7 @@ export function CommentThread({ issueId, comments, currentUser, users, onUpdate 
       <div className="space-y-4 mb-6">
         {comments.map(comment => (
           <div key={comment.id} className="flex gap-3">
-            {comment.author.avatar_url ? (
+            {comment.author?.avatar_url ? (
               <img 
                 src={comment.author.avatar_url} 
                 alt={comment.author.name}
@@ -116,15 +142,15 @@ export function CommentThread({ issueId, comments, currentUser, users, onUpdate 
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
-                {comment.author.name.charAt(0).toUpperCase()}
+                {comment.author?.name?.charAt(0).toUpperCase() || '?'}
               </div>
             )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-sm">
-                  {comment.author.name}
-                  {comment.author.is_bot && ' 🤖'}
+                  {comment.author?.name || 'Unknown'}
+                  {comment.author?.is_bot && ' 🤖'}
                 </span>
                 <span className="text-xs text-slate-500">
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

@@ -10,7 +10,8 @@ interface SubtaskListProps {
   onUpdate: () => void
 }
 
-export function SubtaskList({ issueId, subtasks, onUpdate }: SubtaskListProps) {
+export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: SubtaskListProps) {
+  const [subtasks, setSubtasks] = useState(initialSubtasks)
   const [newSubtask, setNewSubtask] = useState('')
   const [adding, setAdding] = useState(false)
   const supabase = createClient()
@@ -28,13 +29,19 @@ export function SubtaskList({ issueId, subtasks, onUpdate }: SubtaskListProps) {
       : -1
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from('subtasks')
       .insert({
         issue_id: issueId,
         title: newSubtask.trim(),
         position: maxPosition + 1,
       })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setSubtasks([...subtasks, data])
+    }
 
     setNewSubtask('')
     setAdding(false)
@@ -42,22 +49,41 @@ export function SubtaskList({ issueId, subtasks, onUpdate }: SubtaskListProps) {
   }
 
   const toggleSubtask = async (subtaskId: string, isDone: boolean) => {
+    // Optimistic update
+    setSubtasks(subtasks.map(s => 
+      s.id === subtaskId ? { ...s, is_done: !isDone } : s
+    ))
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('subtasks')
       .update({ is_done: !isDone })
       .eq('id', subtaskId)
 
+    if (error) {
+      // Revert on error
+      setSubtasks(subtasks.map(s => 
+        s.id === subtaskId ? { ...s, is_done: isDone } : s
+      ))
+    }
     onUpdate()
   }
 
   const deleteSubtask = async (subtaskId: string) => {
+    // Optimistic update
+    const previousSubtasks = subtasks
+    setSubtasks(subtasks.filter(s => s.id !== subtaskId))
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('subtasks')
       .delete()
       .eq('id', subtaskId)
 
+    if (error) {
+      // Revert on error
+      setSubtasks(previousSubtasks)
+    }
     onUpdate()
   }
 

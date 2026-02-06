@@ -43,7 +43,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     .from('audit_log')
     .select(`
       *,
-      actor:users!audit_log_actor_id_fkey(id, name, avatar_url, is_bot),
+      actor:users(id, name, avatar_url, is_bot),
       issue:issues(id, number, title)
     `)
     .eq('project_id', (project as Project).id)
@@ -58,7 +58,11 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     query = query.eq('action', type)
   }
 
-  const { data: activities } = await query
+  const { data: activities, error: activitiesError } = await query
+  
+  if (activitiesError) {
+    console.error('Activity query error:', activitiesError)
+  }
 
   // Get all users for filter dropdown
   const { data: users } = await supabase
