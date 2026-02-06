@@ -435,7 +435,7 @@ CREATE POLICY "Service role has full access to audit_log"
 CREATE OR REPLACE FUNCTION create_user_on_signup()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO users (auth_id, email, name, avatar_url)
+  INSERT INTO public.users (auth_id, email, name, avatar_url)
   VALUES (
     NEW.id,
     NEW.email,
