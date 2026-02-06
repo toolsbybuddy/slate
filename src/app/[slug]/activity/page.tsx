@@ -10,30 +10,39 @@ interface ActivityPageProps {
 }
 
 export default async function ActivityPage({ params, searchParams }: ActivityPageProps) {
+  console.log('[Activity] Starting page render')
+  
   const { slug } = await params
   const { actor, type } = await searchParams
-  const supabase = await createClient()
+  console.log('[Activity] Params:', { slug, actor, type })
   
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient()
+  console.log('[Activity] Supabase client created')
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  console.log('[Activity] Auth check:', { hasUser: !!user, authError })
+  
   if (!user) {
     redirect('/login')
   }
 
   // Get current user's app profile
-  const { data: currentUser } = await supabase
+  const { data: currentUser, error: userError } = await supabase
     .from('users')
     .select('*')
     .eq('auth_id', user.id)
     .single()
+  console.log('[Activity] Current user lookup:', { hasCurrentUser: !!currentUser, userError })
 
   // Get project by slug
-  const { data: project, error } = await supabase
+  const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('*')
     .eq('slug', slug)
     .single()
+  console.log('[Activity] Project lookup:', { hasProject: !!project, projectError })
 
-  if (error || !project) {
+  if (projectError || !project) {
     notFound()
   }
 
@@ -61,7 +70,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
   const { data: activities, error: activitiesError } = await query
   
   if (activitiesError) {
-    console.error('Activity query error:', activitiesError)
+    console.error('Activity query error:', JSON.stringify(activitiesError, null, 2))
   }
 
   // Get all users for filter dropdown
