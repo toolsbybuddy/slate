@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -19,6 +20,12 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setMessage(null)
+
+    if (isSignUp && password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -65,6 +72,14 @@ export default function LoginPage() {
     }
   }
 
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp)
+    setError(null)
+    setMessage(null)
+    setPassword('')
+    setConfirmPassword('')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="card p-8 w-full max-w-md">
@@ -73,6 +88,32 @@ export default function LoginPage() {
             <span className="text-indigo-400">Slate</span>
           </h1>
           <p className="text-slate-400">Bot-first issue tracking</p>
+        </div>
+
+        {/* Mode indicator */}
+        <div className="flex mb-6 bg-slate-800 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => !isSignUp || toggleMode()}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              !isSignUp 
+                ? 'bg-indigo-600 text-white' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => isSignUp || toggleMode()}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              isSignUp 
+                ? 'bg-indigo-600 text-white' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Create Account
+          </button>
         </div>
 
         {/* Email/Password Form */}
@@ -108,6 +149,24 @@ export default function LoginPage() {
             />
           </div>
 
+          {isSignUp && (
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="input"
+                required
+                minLength={6}
+              />
+            </div>
+          )}
+
           {error && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
               {error}
@@ -125,22 +184,9 @@ export default function LoginPage() {
             disabled={loading}
             className="btn btn-primary w-full py-3"
           >
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
-
-        <div className="text-center mb-6">
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp)
-              setError(null)
-              setMessage(null)
-            }}
-            className="text-sm text-indigo-400 hover:text-indigo-300"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
-        </div>
 
         {/* Divider */}
         <div className="relative mb-6">
@@ -176,7 +222,7 @@ export default function LoginPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
+          Continue with Google
         </button>
 
         <p className="mt-6 text-center text-sm text-slate-500">
