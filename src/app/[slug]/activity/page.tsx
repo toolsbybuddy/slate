@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ActivityFeed } from '@/components/activity-feed'
+import { ActivityFilters } from '@/components/activity-filters'
 import type { Project, User } from '@/types/database'
 
 interface ActivityPageProps {
@@ -10,29 +11,15 @@ interface ActivityPageProps {
 }
 
 export default async function ActivityPage({ params, searchParams }: ActivityPageProps) {
-  console.log('[Activity] Starting page render')
-  
   const { slug } = await params
   const { actor, type } = await searchParams
-  console.log('[Activity] Params:', { slug, actor, type })
   
   const supabase = await createClient()
-  console.log('[Activity] Supabase client created')
   
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  console.log('[Activity] Auth check:', { hasUser: !!user, authError })
-  
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     redirect('/login')
   }
-
-  // Get current user's app profile
-  const { data: currentUser, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_id', user.id)
-    .single()
-  console.log('[Activity] Current user lookup:', { hasCurrentUser: !!currentUser, userError })
 
   // Get project by slug
   const { data: project, error: projectError } = await supabase
@@ -40,7 +27,6 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     .select('*')
     .eq('slug', slug)
     .single()
-  console.log('[Activity] Project lookup:', { hasProject: !!project, projectError })
 
   if (projectError || !project) {
     notFound()
@@ -67,11 +53,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     query = query.eq('action', type)
   }
 
-  const { data: activities, error: activitiesError } = await query
-  
-  if (activitiesError) {
-    console.error('Activity query error:', JSON.stringify(activitiesError, null, 2))
-  }
+  const { data: activities } = await query
 
   // Get all users for filter dropdown
   const { data: users } = await supabase
@@ -131,56 +113,11 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold">Activity</h2>
           
-          {/* Filters */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-400">Actor:</label>
-              <select
-                defaultValue={actor || 'all'}
-                onChange={(e) => {
-                  const url = new URL(window.location.href)
-                  if (e.target.value === 'all') {
-                    url.searchParams.delete('actor')
-                  } else {
-                    url.searchParams.set('actor', e.target.value)
-                  }
-                  window.location.href = url.toString()
-                }}
-                className="input py-1 px-2 w-36 text-sm"
-              >
-                <option value="all">All</option>
-                {(users as User[])?.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} {u.is_bot ? '🤖' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-400">Type:</label>
-              <select
-                defaultValue={type || 'all'}
-                onChange={(e) => {
-                  const url = new URL(window.location.href)
-                  if (e.target.value === 'all') {
-                    url.searchParams.delete('type')
-                  } else {
-                    url.searchParams.set('type', e.target.value)
-                  }
-                  window.location.href = url.toString()
-                }}
-                className="input py-1 px-2 w-40 text-sm"
-              >
-                <option value="all">All types</option>
-                {actionTypes.map(action => (
-                  <option key={action} value={action}>
-                    {action.replace(/_/g, ' ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <ActivityFilters 
+            users={(users as User[]) || []}
+            actionTypes={actionTypes}
+            projectSlug={(project as Project).slug}
+          />
         </div>
 
         <ActivityFeed 
