@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { IssueCard } from './issue-card'
-import { QuickAddCard } from './quick-add-card'
+import { QuickAddButton, QuickAddInput } from './quick-add-card'
 import type { Project, IssueWithRelations, IssueStatus, Priority, SortOption } from '@/types/database'
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -25,6 +26,7 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, sortBy, onSortChange }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
+  const [isAddingIssue, setIsAddingIssue] = useState(false)
 
   return (
     <div 
@@ -53,9 +55,17 @@ export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, so
               </option>
             ))}
           </select>
-          <QuickAddCard onAdd={onQuickAdd} />
+          <QuickAddButton onClick={() => setIsAddingIssue(true)} />
         </div>
       </div>
+
+      {/* Quick-add input - full width below header */}
+      {isAddingIssue && (
+        <QuickAddInput
+          onAdd={onQuickAdd}
+          onCancel={() => setIsAddingIssue(false)}
+        />
+      )}
 
       <div className="kanban-column-content">
         {issues.map(issue => (

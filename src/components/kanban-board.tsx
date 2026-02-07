@@ -15,7 +15,6 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { KanbanColumn } from './kanban-column'
 import { IssueCard } from './issue-card'
-import { QuickAddCard } from './quick-add-card'
 import { createClient } from '@/lib/supabase/client'
 import type { Project, User, Label, IssueWithRelations, IssueStatus, Priority, SortOption } from '@/types/database'
 

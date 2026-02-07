@@ -3,8 +3,13 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Priority } from '@/types/database'
 
-interface QuickAddCardProps {
+interface QuickAddButtonProps {
+  onClick: () => void
+}
+
+interface QuickAddInputProps {
   onAdd: (title: string, priority?: Priority) => void
+  onCancel: () => void
 }
 
 // Parse priority prefix from title
@@ -28,16 +33,27 @@ function parsePriorityPrefix(input: string): { title: string; priority?: Priorit
   return { title: trimmed }
 }
 
-export function QuickAddCard({ onAdd }: QuickAddCardProps) {
-  const [isAdding, setIsAdding] = useState(false)
+export function QuickAddButton({ onClick }: QuickAddButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors"
+      title="Quick add issue"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+    </button>
+  )
+}
+
+export function QuickAddInput({ onAdd, onCancel }: QuickAddInputProps) {
   const [title, setTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isAdding && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [isAdding])
+    inputRef.current?.focus()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,33 +61,19 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
     if (parsedTitle) {
       onAdd(parsedTitle, priority)
       setTitle('')
-      setIsAdding(false)
+      onCancel()
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setTitle('')
-      setIsAdding(false)
+      onCancel()
     }
   }
 
-  if (!isAdding) {
-    return (
-      <button
-        onClick={() => setIsAdding(true)}
-        className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors"
-        title="Quick add issue"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-    )
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="flex-1 ml-2">
+    <form onSubmit={handleSubmit} className="px-2 pb-2">
       <input
         ref={inputRef}
         type="text"
@@ -80,12 +82,32 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
         onKeyDown={handleKeyDown}
         onBlur={() => {
           if (!title.trim()) {
-            setIsAdding(false)
+            onCancel()
           }
         }}
-        placeholder="Title (prefix: ! !! !!! !!!!)"
-        className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:border-indigo-500"
+        placeholder="New issue title (prefix: ! !! !!! !!!!)"
+        className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
       />
     </form>
+  )
+}
+
+// Legacy component for backwards compatibility (if needed elsewhere)
+interface QuickAddCardProps {
+  onAdd: (title: string, priority?: Priority) => void
+}
+
+export function QuickAddCard({ onAdd }: QuickAddCardProps) {
+  const [isAdding, setIsAdding] = useState(false)
+
+  if (!isAdding) {
+    return <QuickAddButton onClick={() => setIsAdding(true)} />
+  }
+
+  return (
+    <QuickAddInput 
+      onAdd={onAdd} 
+      onCancel={() => setIsAdding(false)} 
+    />
   )
 }
