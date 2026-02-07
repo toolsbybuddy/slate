@@ -3,16 +3,18 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Project } from '@/types/database'
+import type { Project, User } from '@/types/database'
 
 interface ProjectSettingsProps {
   project: Project
+  users: User[]
 }
 
-export function ProjectSettings({ project: initialProject }: ProjectSettingsProps) {
+export function ProjectSettings({ project: initialProject, users }: ProjectSettingsProps) {
   const [project, setProject] = useState(initialProject)
   const [name, setName] = useState(project.name)
   const [description, setDescription] = useState(project.description || '')
+  const [defaultAssigneeId, setDefaultAssigneeId] = useState(project.default_assignee_id || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +33,7 @@ export function ProjectSettings({ project: initialProject }: ProjectSettingsProp
       .update({
         name: name.trim(),
         description: description.trim() || null,
+        default_assignee_id: defaultAssigneeId || null,
       })
       .eq('id', project.id)
       .select()
@@ -91,7 +94,9 @@ export function ProjectSettings({ project: initialProject }: ProjectSettingsProp
     }
   }
 
-  const hasChanges = name !== project.name || description !== (project.description || '')
+  const hasChanges = name !== project.name || 
+    description !== (project.description || '') ||
+    defaultAssigneeId !== (project.default_assignee_id || '')
 
   return (
     <div className="space-y-6">
@@ -138,6 +143,26 @@ export function ProjectSettings({ project: initialProject }: ProjectSettingsProp
             className="input resize-none"
             placeholder="What is this project about?"
           />
+        </div>
+
+        <div>
+          <label htmlFor="defaultAssignee" className="block text-sm font-medium mb-1">
+            Default Assignee
+            <span className="text-slate-500 font-normal ml-2">(auto-assigned on quick-add)</span>
+          </label>
+          <select
+            id="defaultAssignee"
+            value={defaultAssigneeId}
+            onChange={(e) => setDefaultAssigneeId(e.target.value)}
+            className="input"
+          >
+            <option value="">None</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name} {user.is_bot ? '🤖' : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error && (

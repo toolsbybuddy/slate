@@ -35,6 +35,12 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     notFound()
   }
 
+  // Get all users for assignee dropdown
+  const { data: users } = await supabase
+    .from('users')
+    .select('*')
+    .order('name')
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -87,7 +93,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         <h2 className="text-lg font-semibold mb-6">Project Settings</h2>
-        <ProjectSettings project={project as Project} />
+        <ProjectSettings project={project as Project} users={(users || []) as User[]} />
       </main>
     </div>
   )
