@@ -9,6 +9,7 @@ export type Json =
 export type IssueStatus = 'backlog' | 'ready' | 'in_progress' | 'blocked' | 'done'
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
 export type SortOption = 'priority' | 'created' | 'due_date' | 'updated'
+export type Resolution = 'completed' | 'wont_do' | 'duplicate' | 'invalid'
 
 // Simplified database type that allows flexibility until we generate from Supabase
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -123,6 +124,7 @@ export interface Issue {
   description: string | null
   status: IssueStatus
   priority: Priority
+  resolution: Resolution | null
   needs_attention: boolean
   assignee_id: string | null
   due_date: string | null

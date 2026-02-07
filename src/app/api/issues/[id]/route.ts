@@ -1,5 +1,5 @@
 import { authenticateRequest, apiError, apiSuccess, getServiceClient } from '@/lib/api-auth'
-import type { IssueStatus, Priority } from '@/types/database'
+import type { IssueStatus, Priority, Resolution } from '@/types/database'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -87,6 +87,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     description?: string
     status?: IssueStatus
     priority?: Priority
+    resolution?: Resolution | null
     needs_attention?: boolean
     assignee_id?: string | null
     due_date?: string | null
@@ -139,6 +140,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   if (body.priority !== undefined && body.priority !== currentIssue.priority) {
     updates.priority = body.priority
     auditDetails.priority = { from: currentIssue.priority, to: body.priority }
+  }
+
+  if (body.resolution !== undefined && body.resolution !== currentIssue.resolution) {
+    updates.resolution = body.resolution
+    auditDetails.resolution = { from: currentIssue.resolution, to: body.resolution }
   }
 
   if (body.needs_attention !== undefined && body.needs_attention !== currentIssue.needs_attention) {
