@@ -144,7 +144,7 @@ export function ActivityFeed({ activities, project }: ActivityFeedProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">
-                      {activity.actor?.name || 'Unknown'}
+                      {activity.actor?.name || activity.actor?.email || 'Unknown'}
                       {activity.actor?.is_bot && ' 🤖'}
                     </span>
                     <span className="text-slate-400">

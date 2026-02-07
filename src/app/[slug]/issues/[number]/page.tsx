@@ -94,10 +94,11 @@ export default async function IssuePage({ params }: IssuePageProps) {
     `)
     .eq('blocker_id', issue.id)
 
-  // Get all users for assignee dropdown
+  // Get all users for assignee dropdown (exclude soft-deleted)
   const { data: users } = await supabase
     .from('users')
     .select('*')
+    .eq('is_deleted', false)
     .order('name')
 
   // Get all labels

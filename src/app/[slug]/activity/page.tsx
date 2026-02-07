@@ -55,10 +55,11 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
 
   const { data: activities } = await query
 
-  // Get all users for filter dropdown
+  // Get all users for filter dropdown (exclude soft-deleted)
   const { data: users } = await supabase
     .from('users')
     .select('*')
+    .eq('is_deleted', false)
     .order('name')
 
   // Get unique action types from activities

@@ -49,10 +49,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     .eq('project_id', (project as Project).id)
     .order('updated_at', { ascending: false })
 
-  // Get all users for assignee dropdown
+  // Get all users for assignee dropdown (exclude soft-deleted)
   const { data: users } = await supabase
     .from('users')
     .select('*')
+    .eq('is_deleted', false)
     .order('name')
 
   // Get all labels

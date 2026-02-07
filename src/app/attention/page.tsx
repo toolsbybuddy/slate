@@ -62,7 +62,7 @@ export default async function AttentionPage() {
       
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-2">Needs Attention</h1>
+          <h1 className="text-2xl font-bold mb-2">Human Input Needed</h1>
           <p className="text-slate-400">
             {totalCount} issue{totalCount !== 1 ? 's' : ''} flagged across all projects
           </p>
@@ -146,7 +146,7 @@ export default async function AttentionPage() {
                       )}
 
                       {/* Attention indicator */}
-                      <span className="text-red-400" title="Needs Attention">
+                      <span className="text-red-400" title="Human Input Needed">
                         🔔
                       </span>
                     </Link>

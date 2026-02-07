@@ -86,6 +86,8 @@ export interface User {
   name: string
   avatar_url: string | null
   is_bot: boolean
+  is_deleted: boolean
+  deleted_at: string | null
   created_at: string
 }
 

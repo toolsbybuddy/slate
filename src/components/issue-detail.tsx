@@ -277,7 +277,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
                   onChange={handleNeedsAttentionChange}
                   className="rounded border-slate-600 bg-slate-800 text-red-500 focus:ring-red-500"
                 />
-                <span className="text-sm">🔔 Needs Attention</span>
+                <span className="text-sm">🙋 Human Input Needed</span>
               </label>
             </div>
           </div>
@@ -296,7 +296,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
           {/* Metadata */}
           <div className="card p-4 text-sm text-slate-500">
             <div className="space-y-1">
-              <p>Created by {issue.created_by_user?.name || 'Unknown'}</p>
+              <p>Created by {issue.created_by_user?.name || issue.created_by_user?.email || 'Unknown'}</p>
               <p>Created {new Date(issue.created_at).toLocaleDateString()}</p>
               <p>Updated {new Date(issue.updated_at).toLocaleDateString()}</p>
             </div>

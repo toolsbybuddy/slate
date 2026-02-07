@@ -116,7 +116,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
                 {/* Attention indicator */}
                 {issue.needs_attention && (
-                  <span className="text-red-400" title="Needs Attention">
+                  <span className="text-red-400" title="Human Input Needed">
                     🔔
                   </span>
                 )}

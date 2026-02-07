@@ -149,7 +149,7 @@ export function CommentThread({ issueId, comments: initialComments, currentUser,
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-sm">
-                  {comment.author?.name || 'Unknown'}
+                  {comment.author?.name || comment.author?.email || 'Unknown'}
                   {comment.author?.is_bot && ' 🤖'}
                 </span>
                 <span className="text-xs text-slate-500">

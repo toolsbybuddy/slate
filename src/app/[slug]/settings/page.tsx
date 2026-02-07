@@ -35,10 +35,11 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     notFound()
   }
 
-  // Get all users for assignee dropdown
+  // Get all users for assignee dropdown (exclude soft-deleted)
   const { data: users } = await supabase
     .from('users')
     .select('*')
+    .eq('is_deleted', false)
     .order('name')
 
   return (
