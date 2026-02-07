@@ -3,7 +3,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { IssueCard } from './issue-card'
 import { QuickAddCard } from './quick-add-card'
-import type { Project, IssueWithRelations, IssueStatus } from '@/types/database'
+import type { Project, IssueWithRelations, IssueStatus, Priority } from '@/types/database'
 
 interface KanbanColumnProps {
   id: IssueStatus
@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   color: string
   issues: IssueWithRelations[]
   project: Project
-  onQuickAdd: (title: string) => void
+  onQuickAdd: (title: string, priority?: Priority) => void
 }
 
 export function KanbanColumn({ id, title, color, issues, project, onQuickAdd }: KanbanColumnProps) {

@@ -1,9 +1,31 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import type { Priority } from '@/types/database'
 
 interface QuickAddCardProps {
-  onAdd: (title: string) => void
+  onAdd: (title: string, priority?: Priority) => void
+}
+
+// Parse priority prefix from title
+// ! = low, !! = medium, !!! = high, !!!! = critical
+function parsePriorityPrefix(input: string): { title: string; priority?: Priority } {
+  const trimmed = input.trim()
+  
+  if (trimmed.startsWith('!!!!')) {
+    return { title: trimmed.slice(4).trim(), priority: 'critical' }
+  }
+  if (trimmed.startsWith('!!!')) {
+    return { title: trimmed.slice(3).trim(), priority: 'high' }
+  }
+  if (trimmed.startsWith('!!')) {
+    return { title: trimmed.slice(2).trim(), priority: 'medium' }
+  }
+  if (trimmed.startsWith('!')) {
+    return { title: trimmed.slice(1).trim(), priority: 'low' }
+  }
+  
+  return { title: trimmed }
 }
 
 export function QuickAddCard({ onAdd }: QuickAddCardProps) {
@@ -19,8 +41,9 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (title.trim()) {
-      onAdd(title.trim())
+    const { title: parsedTitle, priority } = parsePriorityPrefix(title)
+    if (parsedTitle) {
+      onAdd(parsedTitle, priority)
       setTitle('')
       setIsAdding(false)
     }
@@ -60,7 +83,7 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
             setIsAdding(false)
           }
         }}
-        placeholder="Issue title..."
+        placeholder="Title (prefix: ! !! !!! !!!!)"
         className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:border-indigo-500"
       />
     </form>

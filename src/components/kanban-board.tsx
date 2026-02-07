@@ -17,7 +17,7 @@ import { KanbanColumn } from './kanban-column'
 import { IssueCard } from './issue-card'
 import { QuickAddCard } from './quick-add-card'
 import { createClient } from '@/lib/supabase/client'
-import type { Project, User, Label, IssueWithRelations, IssueStatus } from '@/types/database'
+import type { Project, User, Label, IssueWithRelations, IssueStatus, Priority } from '@/types/database'
 
 const COLUMNS: { id: IssueStatus; title: string; color: string }[] = [
   { id: 'backlog', title: 'Backlog', color: 'var(--status-backlog)' },
@@ -111,7 +111,7 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
     }
   }
 
-  const handleQuickAdd = useCallback(async (status: IssueStatus, title: string) => {
+  const handleQuickAdd = useCallback(async (status: IssueStatus, title: string, priority?: Priority) => {
     if (!currentUser) return
 
     // Create issue
@@ -122,6 +122,7 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
         project_id: project.id,
         title,
         status,
+        priority: priority || 'medium',
         created_by: currentUser.id,
       })
       .select(`
@@ -196,7 +197,7 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
               color={column.color}
               issues={issuesByStatus[column.id]}
               project={project}
-              onQuickAdd={(title) => handleQuickAdd(column.id, title)}
+              onQuickAdd={(title, priority) => handleQuickAdd(column.id, title, priority)}
             />
           ))}
         </div>
