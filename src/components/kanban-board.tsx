@@ -124,6 +124,7 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
         status,
         priority: priority || 'medium',
         created_by: currentUser.id,
+        assignee_id: project.default_assignee_id || null,
       })
       .select(`
         *,
