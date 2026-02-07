@@ -102,6 +102,7 @@ export interface Project {
   slug: string
   description: string | null
   is_archived: boolean
+  default_assignee_id: string | null
   created_at: string
   updated_at: string
 }

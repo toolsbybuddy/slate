@@ -112,16 +112,19 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const supabase = getServiceClient()
 
-  // Get project
+  // Get project (include default_assignee_id)
   const { data: project, error: projectError } = await supabase
     .from('projects')
-    .select('id')
+    .select('id, default_assignee_id')
     .eq('slug', slug)
     .single()
 
   if (projectError || !project) {
     return apiError('Project not found', 404)
   }
+
+  // Use provided assignee_id, or fall back to project default
+  const effectiveAssigneeId = assignee_id !== undefined ? assignee_id : project.default_assignee_id
 
   // Create issue
   const { data: issue, error: insertError } = await supabase
@@ -133,7 +136,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       status: status || 'backlog',
       priority: priority || 'medium',
       needs_attention: needs_attention || false,
-      assignee_id: assignee_id || null,
+      assignee_id: effectiveAssigneeId || null,
       due_date: due_date || null,
       created_by: user.id,
     })
