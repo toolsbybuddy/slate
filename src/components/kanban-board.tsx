@@ -17,7 +17,7 @@ import { KanbanColumn } from './kanban-column'
 import { IssueCard } from './issue-card'
 import { QuickAddCard } from './quick-add-card'
 import { createClient } from '@/lib/supabase/client'
-import type { Project, User, Label, IssueWithRelations, IssueStatus, Priority } from '@/types/database'
+import type { Project, User, Label, IssueWithRelations, IssueStatus, Priority, SortOption } from '@/types/database'
 
 const COLUMNS: { id: IssueStatus; title: string; color: string }[] = [
   { id: 'backlog', title: 'Backlog', color: 'var(--status-backlog)' },
@@ -35,11 +35,75 @@ interface KanbanBoardProps {
   currentUser: User | null
 }
 
+// Priority order for sorting (higher = more important)
+const PRIORITY_ORDER: Record<string, number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+}
+
+// Default sort per column (Backlog defaults to priority, others to created)
+const DEFAULT_SORTS: Record<IssueStatus, SortOption> = {
+  backlog: 'priority',
+  ready: 'created',
+  in_progress: 'created',
+  blocked: 'created',
+  done: 'updated',
+}
+
+function sortIssues(issues: IssueWithRelations[], sortBy: SortOption): IssueWithRelations[] {
+  return [...issues].sort((a, b) => {
+    switch (sortBy) {
+      case 'priority':
+        // Higher priority first
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0)
+      case 'created':
+        // Newest first
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'updated':
+        // Most recently updated first
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      case 'due_date':
+        // Earliest due date first, no due date at end
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+      default:
+        return 0
+    }
+  })
+}
+
+function getStoredSorts(projectId: string): Record<IssueStatus, SortOption> {
+  if (typeof window === 'undefined') return DEFAULT_SORTS
+  try {
+    const stored = localStorage.getItem(`slate-sort-${projectId}`)
+    if (stored) {
+      return { ...DEFAULT_SORTS, ...JSON.parse(stored) }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return DEFAULT_SORTS
+}
+
+function storeSorts(projectId: string, sorts: Record<IssueStatus, SortOption>) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(`slate-sort-${projectId}`, JSON.stringify(sorts))
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export function KanbanBoard({ project, issues: initialIssues, users, labels, currentUser }: KanbanBoardProps) {
   const [issues, setIssues] = useState(initialIssues)
   const [activeIssue, setActiveIssue] = useState<IssueWithRelations | null>(null)
   const [filterAssignee, setFilterAssignee] = useState<string | 'all'>('all')
   const [filterLabel, setFilterLabel] = useState<string | 'all'>('all')
+  const [columnSorts, setColumnSorts] = useState<Record<IssueStatus, SortOption>>(() => getStoredSorts(project.id))
   
   const supabase = createClient()
 
@@ -65,11 +129,18 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
     return true
   })
 
-  // Group issues by status
+  // Group issues by status and sort each column
   const issuesByStatus = COLUMNS.reduce((acc, col) => {
-    acc[col.id] = filteredIssues.filter(issue => issue.status === col.id)
+    const columnIssues = filteredIssues.filter(issue => issue.status === col.id)
+    acc[col.id] = sortIssues(columnIssues, columnSorts[col.id])
     return acc
   }, {} as Record<IssueStatus, IssueWithRelations[]>)
+
+  const handleSortChange = (status: IssueStatus, sortBy: SortOption) => {
+    const newSorts = { ...columnSorts, [status]: sortBy }
+    setColumnSorts(newSorts)
+    storeSorts(project.id, newSorts)
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
@@ -199,6 +270,8 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
               issues={issuesByStatus[column.id]}
               project={project}
               onQuickAdd={(title, priority) => handleQuickAdd(column.id, title, priority)}
+              sortBy={columnSorts[column.id]}
+              onSortChange={(sortBy) => handleSortChange(column.id, sortBy)}
             />
           ))}
         </div>

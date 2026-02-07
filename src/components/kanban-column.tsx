@@ -3,7 +3,14 @@
 import { useDroppable } from '@dnd-kit/core'
 import { IssueCard } from './issue-card'
 import { QuickAddCard } from './quick-add-card'
-import type { Project, IssueWithRelations, IssueStatus, Priority } from '@/types/database'
+import type { Project, IssueWithRelations, IssueStatus, Priority, SortOption } from '@/types/database'
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'priority', label: 'Priority' },
+  { value: 'created', label: 'Created' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'due_date', label: 'Due Date' },
+]
 
 interface KanbanColumnProps {
   id: IssueStatus
@@ -12,9 +19,11 @@ interface KanbanColumnProps {
   issues: IssueWithRelations[]
   project: Project
   onQuickAdd: (title: string, priority?: Priority) => void
+  sortBy: SortOption
+  onSortChange: (sortBy: SortOption) => void
 }
 
-export function KanbanColumn({ id, title, color, issues, project, onQuickAdd }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, sortBy, onSortChange }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
@@ -31,7 +40,21 @@ export function KanbanColumn({ id, title, color, issues, project, onQuickAdd }: 
           <h3 className="font-semibold">{title}</h3>
           <span className="text-slate-500 text-sm">({issues.length})</span>
         </div>
-        <QuickAddCard onAdd={onQuickAdd} />
+        <div className="flex items-center gap-1">
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value as SortOption)}
+            className="bg-transparent text-slate-400 text-xs border-none focus:outline-none cursor-pointer hover:text-white"
+            title="Sort by"
+          >
+            {SORT_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value} className="bg-slate-800">
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <QuickAddCard onAdd={onQuickAdd} />
+        </div>
       </div>
 
       <div className="kanban-column-content">

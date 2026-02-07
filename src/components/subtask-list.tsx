@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Subtask } from '@/types/database'
 
@@ -14,7 +14,18 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
   const [subtasks, setSubtasks] = useState(initialSubtasks)
   const [newSubtask, setNewSubtask] = useState('')
   const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const editInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
+
+  // Focus edit input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus()
+      editInputRef.current.select()
+    }
+  }, [editingId])
 
   const completedCount = subtasks.filter(s => s.is_done).length
   const totalCount = subtasks.length
@@ -87,6 +98,89 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
     onUpdate()
   }
 
+  const startEditing = (subtask: Subtask) => {
+    setEditingId(subtask.id)
+    setEditingTitle(subtask.title)
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingTitle('')
+  }
+
+  const saveEdit = async () => {
+    if (!editingId || !editingTitle.trim()) {
+      cancelEditing()
+      return
+    }
+
+    const trimmedTitle = editingTitle.trim()
+    const subtask = subtasks.find(s => s.id === editingId)
+    
+    // No change
+    if (subtask?.title === trimmedTitle) {
+      cancelEditing()
+      return
+    }
+
+    // Optimistic update
+    setSubtasks(subtasks.map(s => 
+      s.id === editingId ? { ...s, title: trimmedTitle } : s
+    ))
+    cancelEditing()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from('subtasks')
+      .update({ title: trimmedTitle })
+      .eq('id', editingId)
+
+    if (error) {
+      // Revert on error
+      setSubtasks(subtasks)
+    }
+    onUpdate()
+  }
+
+  const moveSubtask = async (subtaskId: string, direction: 'up' | 'down') => {
+    const sortedSubtasks = [...subtasks].sort((a, b) => a.position - b.position)
+    const index = sortedSubtasks.findIndex(s => s.id === subtaskId)
+    
+    if (index === -1) return
+    if (direction === 'up' && index === 0) return
+    if (direction === 'down' && index === sortedSubtasks.length - 1) return
+
+    const swapIndex = direction === 'up' ? index - 1 : index + 1
+    const currentSubtask = sortedSubtasks[index]
+    const swapSubtask = sortedSubtasks[swapIndex]
+
+    // Swap positions
+    const newPosition = swapSubtask.position
+    const swapPosition = currentSubtask.position
+
+    // Optimistic update
+    setSubtasks(subtasks.map(s => {
+      if (s.id === currentSubtask.id) return { ...s, position: newPosition }
+      if (s.id === swapSubtask.id) return { ...s, position: swapPosition }
+      return s
+    }))
+
+    // Update in database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('subtasks')
+      .update({ position: newPosition })
+      .eq('id', currentSubtask.id)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('subtasks')
+      .update({ position: swapPosition })
+      .eq('id', swapSubtask.id)
+
+    onUpdate()
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -114,7 +208,7 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
       <div className="space-y-2 mb-4">
         {subtasks
           .sort((a, b) => a.position - b.position)
-          .map(subtask => (
+          .map((subtask, index, arr) => (
             <div 
               key={subtask.id}
               className="flex items-center gap-2 group"
@@ -125,9 +219,54 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
                 onChange={() => toggleSubtask(subtask.id, subtask.is_done)}
                 className="rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
               />
-              <span className={`flex-1 text-sm ${subtask.is_done ? 'line-through text-slate-500' : ''}`}>
-                {subtask.title}
-              </span>
+              
+              {editingId === subtask.id ? (
+                <input
+                  ref={editInputRef}
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveEdit()
+                    if (e.key === 'Escape') cancelEditing()
+                  }}
+                  onBlur={saveEdit}
+                  className="flex-1 bg-slate-800 border border-indigo-500 rounded px-2 py-0.5 text-sm focus:outline-none"
+                />
+              ) : (
+                <span 
+                  onClick={() => startEditing(subtask)}
+                  className={`flex-1 text-sm cursor-pointer hover:text-indigo-400 ${subtask.is_done ? 'line-through text-slate-500' : ''}`}
+                  title="Click to edit"
+                >
+                  {subtask.title}
+                </span>
+              )}
+
+              {/* Reorder buttons */}
+              <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
+                <button
+                  onClick={() => moveSubtask(subtask.id, 'up')}
+                  disabled={index === 0}
+                  className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move up"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => moveSubtask(subtask.id, 'down')}
+                  disabled={index === arr.length - 1}
+                  className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move down"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+
               <button
                 onClick={() => deleteSubtask(subtask.id)}
                 className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
