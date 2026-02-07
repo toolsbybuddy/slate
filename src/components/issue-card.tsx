@@ -38,17 +38,9 @@ export function IssueCard({ issue, project, isDragging = false }: IssueCardProps
         {/* Header with ID and priority */}
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-mono text-slate-500">{issueId}</span>
-          <div className="flex items-center gap-1">
-            {issue.is_urgent && (
-              <span className="text-xs text-red-400" title="Urgent">⚡</span>
-            )}
-            {issue.is_important && (
-              <span className="text-xs text-amber-400" title="Important">⭐</span>
-            )}
-            <span className={`priority-badge priority-${issue.priority}`}>
-              {issue.priority}
-            </span>
-          </div>
+          <span className={`priority-badge priority-${issue.priority}`}>
+            {issue.priority}
+          </span>
         </div>
 
         {/* Title */}

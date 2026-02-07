@@ -84,14 +84,6 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
     await updateIssue({ assignee_id: assigneeId })
   }
 
-  const handleUrgentChange = async () => {
-    await updateIssue({ is_urgent: !issue.is_urgent })
-  }
-
-  const handleImportantChange = async () => {
-    await updateIssue({ is_important: !issue.is_important })
-  }
-
   const handleNeedsAttentionChange = async () => {
     await updateIssue({ needs_attention: !issue.needs_attention })
   }
@@ -248,28 +240,10 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
             />
           </div>
 
-          {/* Eisenhower Flags */}
+          {/* Flags */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-3">Flags</h3>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={issue.is_urgent}
-                  onChange={handleUrgentChange}
-                  className="rounded border-slate-600 bg-slate-800 text-red-500 focus:ring-red-500"
-                />
-                <span className="text-sm">⚡ Urgent</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={issue.is_important}
-                  onChange={handleImportantChange}
-                  className="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500"
-                />
-                <span className="text-sm">⭐ Important</span>
-              </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"

@@ -57,8 +57,6 @@ describe('Issues API', () => {
           description: 'A detailed description',
           status: 'ready',
           priority: 'high',
-          is_urgent: true,
-          is_important: true,
         }),
       })
 
@@ -69,8 +67,6 @@ describe('Issues API', () => {
       expect(issue.description).toBe('A detailed description')
       expect(issue.status).toBe('ready')
       expect(issue.priority).toBe('high')
-      expect(issue.is_urgent).toBe(true)
-      expect(issue.is_important).toBe(true)
     })
 
     it('should auto-increment issue numbers', async () => {
@@ -135,7 +131,6 @@ describe('Issues API', () => {
         method: 'PATCH',
         body: JSON.stringify({
           priority: 'low',
-          is_urgent: false,
           needs_attention: true,
         }),
       })
@@ -143,7 +138,6 @@ describe('Issues API', () => {
       expect(response.ok).toBe(true)
       const issue = await response.json()
       expect(issue.priority).toBe('low')
-      expect(issue.is_urgent).toBe(false)
       expect(issue.needs_attention).toBe(true)
     })
   })

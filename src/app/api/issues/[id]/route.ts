@@ -87,8 +87,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     description?: string
     status?: IssueStatus
     priority?: Priority
-    is_urgent?: boolean
-    is_important?: boolean
     needs_attention?: boolean
     assignee_id?: string | null
     due_date?: string | null
@@ -141,16 +139,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   if (body.priority !== undefined && body.priority !== currentIssue.priority) {
     updates.priority = body.priority
     auditDetails.priority = { from: currentIssue.priority, to: body.priority }
-  }
-
-  if (body.is_urgent !== undefined && body.is_urgent !== currentIssue.is_urgent) {
-    updates.is_urgent = body.is_urgent
-    auditDetails.is_urgent = body.is_urgent
-  }
-
-  if (body.is_important !== undefined && body.is_important !== currentIssue.is_important) {
-    updates.is_important = body.is_important
-    auditDetails.is_important = body.is_important
   }
 
   if (body.needs_attention !== undefined && body.needs_attention !== currentIssue.needs_attention) {

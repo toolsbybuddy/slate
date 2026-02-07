@@ -93,8 +93,6 @@ export async function POST(request: Request, { params }: RouteParams) {
     description?: string
     status?: IssueStatus
     priority?: Priority
-    is_urgent?: boolean
-    is_important?: boolean
     needs_attention?: boolean
     assignee_id?: string | null
     due_date?: string | null
@@ -106,7 +104,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return apiError('Invalid JSON body', 400)
   }
 
-  const { title, description, status, priority, is_urgent, is_important, needs_attention, assignee_id, due_date } = body
+  const { title, description, status, priority, needs_attention, assignee_id, due_date } = body
 
   if (!title?.trim()) {
     return apiError('Title is required', 400)
@@ -134,8 +132,6 @@ export async function POST(request: Request, { params }: RouteParams) {
       description: description?.trim() || null,
       status: status || 'backlog',
       priority: priority || 'medium',
-      is_urgent: is_urgent || false,
-      is_important: is_important || false,
       needs_attention: needs_attention || false,
       assignee_id: assignee_id || null,
       due_date: due_date || null,

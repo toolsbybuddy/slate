@@ -40,8 +40,6 @@ export interface Database {
           number?: number
           status?: IssueStatus
           priority?: Priority
-          is_urgent?: boolean
-          is_important?: boolean
           needs_attention?: boolean
         }
         Update: Partial<Issue>
@@ -123,8 +121,6 @@ export interface Issue {
   description: string | null
   status: IssueStatus
   priority: Priority
-  is_urgent: boolean
-  is_important: boolean
   needs_attention: boolean
   assignee_id: string | null
   due_date: string | null
