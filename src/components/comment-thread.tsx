@@ -15,9 +15,10 @@ interface CommentThreadProps {
   currentUser: User
   users: User[]
   onUpdate: () => void
+  isReadOnly?: boolean
 }
 
-export function CommentThread({ issueId, comments: initialComments, currentUser, users, onUpdate }: CommentThreadProps) {
+export function CommentThread({ issueId, comments: initialComments, currentUser, users, onUpdate, isReadOnly }: CommentThreadProps) {
   const [comments, setComments] = useState(initialComments)
   const [newComment, setNewComment] = useState('')
   const [posting, setPosting] = useState(false)
@@ -214,39 +215,43 @@ export function CommentThread({ issueId, comments: initialComments, currentUser,
         )}
       </div>
 
-      {/* New comment form */}
-      <div className="flex gap-3">
-        {currentUser.avatar_url ? (
-          <img 
-            src={currentUser.avatar_url} 
-            alt={currentUser.name}
-            className="w-8 h-8 rounded-full flex-shrink-0"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
-            {currentUser.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+      {/* New comment form - hidden when read-only */}
+      {!isReadOnly ? (
+        <div className="flex gap-3">
+          {currentUser.avatar_url ? (
+            <img 
+              src={currentUser.avatar_url} 
+              alt={currentUser.name}
+              className="w-8 h-8 rounded-full flex-shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium flex-shrink-0">
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+          )}
 
-        <div className="flex-1">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment... Use @name to mention someone"
-            rows={3}
-            className="input resize-none text-sm mb-2"
-          />
-          <div className="flex justify-end">
-            <button
-              onClick={postComment}
-              disabled={!newComment.trim() || posting}
-              className="btn btn-primary text-sm"
-            >
-              {posting ? 'Posting...' : 'Comment'}
-            </button>
+          <div className="flex-1">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment... Use @name to mention someone"
+              rows={3}
+              className="input resize-none text-sm mb-2"
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={postComment}
+                disabled={!newComment.trim() || posting}
+                className="btn btn-primary text-sm"
+              >
+                {posting ? 'Posting...' : 'Comment'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <p className="text-sm text-slate-500 italic">Comments are disabled for archived projects.</p>
+      )}
     </div>
   )
 }

@@ -22,9 +22,10 @@ interface KanbanColumnProps {
   onQuickAdd: (title: string, priority?: Priority) => void
   sortBy: SortOption
   onSortChange: (sortBy: SortOption) => void
+  isReadOnly?: boolean
 }
 
-export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, sortBy, onSortChange }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, sortBy, onSortChange, isReadOnly }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
   const [isAddingIssue, setIsAddingIssue] = useState(false)
 
@@ -55,12 +56,12 @@ export function KanbanColumn({ id, title, color, issues, project, onQuickAdd, so
               </option>
             ))}
           </select>
-          <QuickAddButton onClick={() => setIsAddingIssue(true)} />
+          {!isReadOnly && <QuickAddButton onClick={() => setIsAddingIssue(true)} />}
         </div>
       </div>
 
       {/* Quick-add input - full width below header */}
-      {isAddingIssue && (
+      {!isReadOnly && isAddingIssue && (
         <QuickAddInput
           onAdd={onQuickAdd}
           onCancel={() => setIsAddingIssue(false)}

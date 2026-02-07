@@ -34,6 +34,7 @@ interface IssueDetailProps {
 export function IssueDetail({ issue: initialIssue, project, users, labels, currentUser }: IssueDetailProps) {
   const router = useRouter()
   const supabase = createClient()
+  const isReadOnly = project.is_archived
   
   const [issue, setIssue] = useState(initialIssue)
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -117,14 +118,30 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
 
   return (
     <div className="space-y-6">
+      {/* Read-only banner for archived projects */}
+      {isReadOnly && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2 text-amber-400">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span className="text-sm">This project is archived. Issues are read-only.</span>
+        </div>
+      )}
+
       {/* Issue ID and Status Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-sm font-mono text-slate-500 bg-slate-800 px-2 py-1 rounded">
             {issueId}
           </span>
-          <StatusSelect value={issue.status} onChange={handleStatusChange} />
-          {issue.status === 'done' && (
+          {isReadOnly ? (
+            <span className={`status-badge status-${issue.status.replace('_', '-')}`}>
+              {issue.status.replace('_', ' ')}
+            </span>
+          ) : (
+            <StatusSelect value={issue.status} onChange={handleStatusChange} />
+          )}
+          {!isReadOnly && issue.status === 'done' && (
             <ResolutionSelect value={issue.resolution} onChange={handleResolutionChange} />
           )}
         </div>
@@ -136,7 +153,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
 
       {/* Title */}
       <div>
-        {isEditingTitle ? (
+        {!isReadOnly && isEditingTitle ? (
           <input
             type="text"
             value={title}
@@ -148,8 +165,8 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
           />
         ) : (
           <h1 
-            className="text-2xl font-bold cursor-pointer hover:text-indigo-400 transition-colors"
-            onClick={() => setIsEditingTitle(true)}
+            className={`text-2xl font-bold ${!isReadOnly ? 'cursor-pointer hover:text-indigo-400 transition-colors' : ''}`}
+            onClick={() => !isReadOnly && setIsEditingTitle(true)}
           >
             {issue.title}
           </h1>
@@ -163,7 +180,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
           {/* Description */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-3">Description</h3>
-            {isEditingDescription ? (
+            {!isReadOnly && isEditingDescription ? (
               <div className="space-y-2">
                 <textarea
                   value={description}
@@ -193,8 +210,8 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
               </div>
             ) : (
               <div 
-                className="prose prose-invert prose-sm max-w-none cursor-pointer hover:bg-slate-800/50 rounded p-2 -m-2 transition-colors"
-                onClick={() => setIsEditingDescription(true)}
+                className={`prose prose-invert prose-sm max-w-none ${!isReadOnly ? 'cursor-pointer hover:bg-slate-800/50 transition-colors' : ''} rounded p-2 -m-2`}
+                onClick={() => !isReadOnly && setIsEditingDescription(true)}
               >
                 {issue.description ? (
                   <p className="whitespace-pre-wrap">{issue.description}</p>
@@ -211,6 +228,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
               issueId={issue.id}
               subtasks={issue.subtasks}
               onUpdate={() => router.refresh()}
+              isReadOnly={isReadOnly}
             />
           </div>
 
@@ -222,6 +240,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
               blocking={issue.blocking}
               project={project}
               onUpdate={() => router.refresh()}
+              isReadOnly={isReadOnly}
             />
           </div>
 
@@ -233,6 +252,7 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
               currentUser={currentUser}
               users={users}
               onUpdate={() => router.refresh()}
+              isReadOnly={isReadOnly}
             />
           </div>
         </div>
@@ -242,40 +262,76 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
           {/* Assignee */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-2">Assignee</h3>
-            <AssigneeSelect
-              value={issue.assignee_id}
-              users={users}
-              onChange={handleAssigneeChange}
-            />
+            {isReadOnly ? (
+              <div className="flex items-center gap-2">
+                {issue.assignee?.avatar_url ? (
+                  <img src={issue.assignee.avatar_url} alt="" className="w-6 h-6 rounded-full" />
+                ) : issue.assignee ? (
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-xs">
+                    {issue.assignee.name.charAt(0).toUpperCase()}
+                  </div>
+                ) : null}
+                <span className="text-sm">{issue.assignee?.name || 'Unassigned'}</span>
+              </div>
+            ) : (
+              <AssigneeSelect
+                value={issue.assignee_id}
+                users={users}
+                onChange={handleAssigneeChange}
+              />
+            )}
           </div>
 
           {/* Priority */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-2">Priority</h3>
-            <PrioritySelect value={issue.priority} onChange={handlePriorityChange} />
+            {isReadOnly ? (
+              <span className={`priority-badge priority-${issue.priority}`}>
+                {issue.priority}
+              </span>
+            ) : (
+              <PrioritySelect value={issue.priority} onChange={handlePriorityChange} />
+            )}
           </div>
 
           {/* Labels */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-2">Labels</h3>
-            <LabelSelect
-              issueId={issue.id}
-              selectedLabels={issue.labels}
-              allLabels={labels}
-              onUpdate={() => router.refresh()}
-            />
+            {isReadOnly ? (
+              <div className="flex flex-wrap gap-1">
+                {issue.labels.length > 0 ? issue.labels.map(label => (
+                  <span
+                    key={label.id}
+                    className="label-chip"
+                    style={{ backgroundColor: `${label.color}20`, color: label.color }}
+                  >
+                    {label.name}
+                  </span>
+                )) : (
+                  <span className="text-sm text-slate-500">No labels</span>
+                )}
+              </div>
+            ) : (
+              <LabelSelect
+                issueId={issue.id}
+                selectedLabels={issue.labels}
+                allLabels={labels}
+                onUpdate={() => router.refresh()}
+              />
+            )}
           </div>
 
           {/* Flags */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-3">Flags</h3>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className={`flex items-center gap-2 ${isReadOnly ? '' : 'cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   checked={issue.needs_attention}
                   onChange={handleNeedsAttentionChange}
-                  className="rounded border-slate-600 bg-slate-800 text-red-500 focus:ring-red-500"
+                  disabled={isReadOnly}
+                  className="rounded border-slate-600 bg-slate-800 text-red-500 focus:ring-red-500 disabled:opacity-50"
                 />
                 <span className="text-sm">🙋 Human Input Needed</span>
               </label>
@@ -285,12 +341,16 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
           {/* Due Date */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold text-slate-400 mb-2">Due Date</h3>
-            <input
-              type="date"
-              value={issue.due_date || ''}
-              onChange={(e) => handleDueDateChange(e.target.value || null)}
-              className="input"
-            />
+            {isReadOnly ? (
+              <span className="text-sm">{issue.due_date ? new Date(issue.due_date).toLocaleDateString() : 'Not set'}</span>
+            ) : (
+              <input
+                type="date"
+                value={issue.due_date || ''}
+                onChange={(e) => handleDueDateChange(e.target.value || null)}
+                className="input"
+              />
+            )}
           </div>
 
           {/* Metadata */}
@@ -302,16 +362,18 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
             </div>
           </div>
 
-          {/* Danger Zone */}
-          <div className="card p-4 border-red-500/30">
-            <h3 className="text-sm font-semibold text-red-400 mb-2">Danger Zone</h3>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="w-full btn btn-ghost border border-red-500/50 text-red-500 hover:bg-red-500/10 text-sm"
-            >
-              Delete Issue
-            </button>
-          </div>
+          {/* Danger Zone - hidden for archived projects */}
+          {!isReadOnly && (
+            <div className="card p-4 border-red-500/30">
+              <h3 className="text-sm font-semibold text-red-400 mb-2">Danger Zone</h3>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full btn btn-ghost border border-red-500/50 text-red-500 hover:bg-red-500/10 text-sm"
+              >
+                Delete Issue
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

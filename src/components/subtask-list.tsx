@@ -8,9 +8,10 @@ interface SubtaskListProps {
   issueId: string
   subtasks: Subtask[]
   onUpdate: () => void
+  isReadOnly?: boolean
 }
 
-export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: SubtaskListProps) {
+export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate, isReadOnly }: SubtaskListProps) {
   const [subtasks, setSubtasks] = useState(initialSubtasks)
   const [newSubtask, setNewSubtask] = useState('')
   const [adding, setAdding] = useState(false)
@@ -216,11 +217,12 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
               <input
                 type="checkbox"
                 checked={subtask.is_done}
-                onChange={() => toggleSubtask(subtask.id, subtask.is_done)}
-                className="rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
+                onChange={() => !isReadOnly && toggleSubtask(subtask.id, subtask.is_done)}
+                disabled={isReadOnly}
+                className="rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500 disabled:opacity-50"
               />
               
-              {editingId === subtask.id ? (
+              {!isReadOnly && editingId === subtask.id ? (
                 <input
                   ref={editInputRef}
                   type="text"
@@ -235,69 +237,75 @@ export function SubtaskList({ issueId, subtasks: initialSubtasks, onUpdate }: Su
                 />
               ) : (
                 <span 
-                  onClick={() => startEditing(subtask)}
-                  className={`flex-1 text-sm cursor-pointer hover:text-indigo-400 ${subtask.is_done ? 'line-through text-slate-500' : ''}`}
-                  title="Click to edit"
+                  onClick={() => !isReadOnly && startEditing(subtask)}
+                  className={`flex-1 text-sm ${!isReadOnly ? 'cursor-pointer hover:text-indigo-400' : ''} ${subtask.is_done ? 'line-through text-slate-500' : ''}`}
+                  title={isReadOnly ? undefined : "Click to edit"}
                 >
                   {subtask.title}
                 </span>
               )}
 
-              {/* Reorder buttons */}
-              <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                <button
-                  onClick={() => moveSubtask(subtask.id, 'up')}
-                  disabled={index === 0}
-                  className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move up"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => moveSubtask(subtask.id, 'down')}
-                  disabled={index === arr.length - 1}
-                  className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move down"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
+              {/* Reorder buttons - hidden when read-only */}
+              {!isReadOnly && (
+                <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
+                  <button
+                    onClick={() => moveSubtask(subtask.id, 'up')}
+                    disabled={index === 0}
+                    className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Move up"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => moveSubtask(subtask.id, 'down')}
+                    disabled={index === arr.length - 1}
+                    className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Move down"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
 
-              <button
-                onClick={() => deleteSubtask(subtask.id)}
-                className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
-                title="Delete subtask"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={() => deleteSubtask(subtask.id)}
+                  className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity"
+                  title="Delete subtask"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           ))}
       </div>
 
-      {/* Add new subtask */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newSubtask}
-          onChange={(e) => setNewSubtask(e.target.value)}
-          placeholder="Add a subtask..."
-          className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
-          onKeyDown={(e) => e.key === 'Enter' && addSubtask()}
-        />
-        <button
-          onClick={addSubtask}
-          disabled={!newSubtask.trim() || adding}
-          className="btn btn-ghost text-sm"
-        >
-          Add
-        </button>
-      </div>
+      {/* Add new subtask - hidden when read-only */}
+      {!isReadOnly && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSubtask}
+            onChange={(e) => setNewSubtask(e.target.value)}
+            placeholder="Add a subtask..."
+            className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+            onKeyDown={(e) => e.key === 'Enter' && addSubtask()}
+          />
+          <button
+            onClick={addSubtask}
+            disabled={!newSubtask.trim() || adding}
+            className="btn btn-ghost text-sm"
+          >
+            Add
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -105,16 +105,20 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
   const [columnSorts, setColumnSorts] = useState<Record<IssueStatus, SortOption>>(() => getStoredSorts(project.id))
   
   const supabase = createClient()
+  const isReadOnly = project.is_archived
 
+  // Disable drag-and-drop for archived projects
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    ...(!isReadOnly ? [
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      })
+    ] : [])
   )
 
   // Filter issues
@@ -271,6 +275,7 @@ export function KanbanBoard({ project, issues: initialIssues, users, labels, cur
               onQuickAdd={(title, priority) => handleQuickAdd(column.id, title, priority)}
               sortBy={columnSorts[column.id]}
               onSortChange={(sortBy) => handleSortChange(column.id, sortBy)}
+              isReadOnly={isReadOnly}
             />
           ))}
         </div>

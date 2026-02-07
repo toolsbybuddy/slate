@@ -15,9 +15,10 @@ interface DependencyListProps {
   blocking: IssueWithProject[]
   project: Project
   onUpdate: () => void
+  isReadOnly?: boolean
 }
 
-export function DependencyList({ issue, blockedBy, blocking, project, onUpdate }: DependencyListProps) {
+export function DependencyList({ issue, blockedBy, blocking, project, onUpdate, isReadOnly }: DependencyListProps) {
   const [isAdding, setIsAdding] = useState<'blockedBy' | 'blocking' | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Issue[]>([])
@@ -121,16 +122,18 @@ export function DependencyList({ issue, blockedBy, blocking, project, onUpdate }
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-slate-500 uppercase tracking-wide">Blocked by</span>
-          <button
-            onClick={() => {
-              setIsAdding(isAdding === 'blockedBy' ? null : 'blockedBy')
-              setSearchQuery('')
-              setSearchResults([])
-            }}
-            className="text-xs text-indigo-400 hover:text-indigo-300"
-          >
-            {isAdding === 'blockedBy' ? 'Cancel' : '+ Add'}
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => {
+                setIsAdding(isAdding === 'blockedBy' ? null : 'blockedBy')
+                setSearchQuery('')
+                setSearchResults([])
+              }}
+              className="text-xs text-indigo-400 hover:text-indigo-300"
+            >
+              {isAdding === 'blockedBy' ? 'Cancel' : '+ Add'}
+            </button>
+          )}
         </div>
         
         {blockedBy.length > 0 ? (
@@ -179,16 +182,18 @@ export function DependencyList({ issue, blockedBy, blocking, project, onUpdate }
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-slate-500 uppercase tracking-wide">Blocking</span>
-          <button
-            onClick={() => {
-              setIsAdding(isAdding === 'blocking' ? null : 'blocking')
-              setSearchQuery('')
-              setSearchResults([])
-            }}
-            className="text-xs text-indigo-400 hover:text-indigo-300"
-          >
-            {isAdding === 'blocking' ? 'Cancel' : '+ Add'}
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => {
+                setIsAdding(isAdding === 'blocking' ? null : 'blocking')
+                setSearchQuery('')
+                setSearchResults([])
+              }}
+              className="text-xs text-indigo-400 hover:text-indigo-300"
+            >
+              {isAdding === 'blocking' ? 'Cancel' : '+ Add'}
+            </button>
+          )}
         </div>
         
         {blocking.length > 0 ? (
