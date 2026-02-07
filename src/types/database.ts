@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type IssueStatus = 'backlog' | 'ready' | 'in_progress' | 'blocked' | 'done'
-export type Priority = 'low' | 'medium' | 'high'
+export type Priority = 'low' | 'medium' | 'high' | 'critical'
 
 // Simplified database type that allows flexibility until we generate from Supabase
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

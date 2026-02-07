@@ -7,6 +7,7 @@ const PRIORITIES: { value: Priority; label: string; color: string }[] = [
   { value: 'low', label: 'Low', color: 'var(--priority-low)' },
   { value: 'medium', label: 'Medium', color: 'var(--priority-medium)' },
   { value: 'high', label: 'High', color: 'var(--priority-high)' },
+  { value: 'critical', label: '🔥 Critical', color: 'var(--priority-critical)' },
 ]
 
 interface PrioritySelectProps {

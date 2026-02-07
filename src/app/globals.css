@@ -23,6 +23,7 @@
   --priority-low: #64748b;
   --priority-medium: #fbbf24;
   --priority-high: #f87171;
+  --priority-critical: #dc2626;
 }
 
 body {
@@ -138,6 +139,7 @@ body {
 .priority-low { background: rgba(100, 116, 139, 0.2); color: var(--priority-low); }
 .priority-medium { background: rgba(251, 191, 36, 0.2); color: var(--priority-medium); }
 .priority-high { background: rgba(248, 113, 113, 0.2); color: var(--priority-high); }
+.priority-critical { background: rgba(220, 38, 38, 0.3); color: var(--priority-critical); font-weight: 600; }
 
 /* Label chip */
 .label-chip {
