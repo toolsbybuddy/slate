@@ -7,10 +7,11 @@ import { StatusSelect } from './status-select'
 import { PrioritySelect } from './priority-select'
 import { AssigneeSelect } from './assignee-select'
 import { LabelSelect } from './label-select'
+import { ResolutionSelect } from './resolution-select'
 import { SubtaskList } from './subtask-list'
 import { CommentThread } from './comment-thread'
 import { DependencyList } from './dependency-list'
-import type { Project, User, Label, Issue, Subtask, Comment, IssueStatus, Priority } from '@/types/database'
+import type { Project, User, Label, Issue, Subtask, Comment, IssueStatus, Priority, Resolution } from '@/types/database'
 
 interface IssueWithRelations extends Issue {
   assignee?: User | null
@@ -40,6 +41,8 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
   const [title, setTitle] = useState(issue.title)
   const [description, setDescription] = useState(issue.description || '')
   const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const issueId = `${project.slug.toUpperCase()}-${issue.number}`
 
@@ -92,6 +95,26 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
     await updateIssue({ due_date: date })
   }
 
+  const handleResolutionChange = async (resolution: Resolution | null) => {
+    await updateIssue({ resolution })
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from('issues')
+      .delete()
+      .eq('id', issue.id)
+
+    if (!error) {
+      router.push(`/${project.slug}`)
+    } else {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Issue ID and Status Row */}
@@ -101,6 +124,9 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
             {issueId}
           </span>
           <StatusSelect value={issue.status} onChange={handleStatusChange} />
+          {issue.status === 'done' && (
+            <ResolutionSelect value={issue.resolution} onChange={handleResolutionChange} />
+          )}
         </div>
         
         {saving && (
@@ -275,8 +301,47 @@ export function IssueDetail({ issue: initialIssue, project, users, labels, curre
               <p>Updated {new Date(issue.updated_at).toLocaleDateString()}</p>
             </div>
           </div>
+
+          {/* Danger Zone */}
+          <div className="card p-4 border-red-500/30">
+            <h3 className="text-sm font-semibold text-red-400 mb-2">Danger Zone</h3>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full btn btn-ghost border border-red-500/50 text-red-500 hover:bg-red-500/10 text-sm"
+            >
+              Delete Issue
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold mb-2">Delete Issue?</h3>
+            <p className="text-slate-400 text-sm mb-4">
+              This will permanently delete <strong>{issueId}</strong> and all its subtasks, comments, and history. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="btn btn-ghost"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="btn bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleting ? 'Deleting...' : 'Delete Issue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
