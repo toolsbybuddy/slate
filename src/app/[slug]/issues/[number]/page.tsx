@@ -123,18 +123,41 @@ export default async function IssuePage({ params }: IssuePageProps) {
     <div className="min-h-screen bg-slate-950">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link 
-            href={`/${slug}`}
-            className="text-slate-400 hover:text-white flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to board
-          </Link>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400">{(project as Project).name}</span>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link 
+              href={`/${slug}`}
+              className="text-slate-400 hover:text-white flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to board
+            </Link>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400">{(project as Project).name}</span>
+          </div>
+
+          {currentUser && (
+            <Link 
+              href="/settings/profile"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              title="Profile settings"
+            >
+              {(currentUser as User).avatar_url ? (
+                <img 
+                  src={(currentUser as User).avatar_url!} 
+                  alt={(currentUser as User).name} 
+                  className="w-7 h-7 rounded-full"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium">
+                  {(currentUser as User).name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="text-sm text-slate-300">{(currentUser as User).name}</span>
+            </Link>
+          )}
         </div>
       </header>
 

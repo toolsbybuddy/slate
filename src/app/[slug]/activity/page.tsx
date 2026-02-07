@@ -21,6 +21,13 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     redirect('/login')
   }
 
+  // Get current user's app profile
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_id', user.id)
+    .single()
+
   // Get project by slug
   const { data: project, error: projectError } = await supabase
     .from('projects')
@@ -87,26 +94,52 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             </div>
           </div>
 
-          <nav className="flex items-center gap-2">
-            <Link 
-              href={`/${slug}`}
-              className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Board
-            </Link>
-            <Link 
-              href={`/${slug}/activity`}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-slate-800 rounded"
-            >
-              Activity
-            </Link>
-            <Link 
-              href={`/${slug}/settings`}
-              className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Settings
-            </Link>
-          </nav>
+          <div className="flex items-center gap-4">
+            <nav className="flex items-center gap-2">
+              <Link 
+                href={`/${slug}`}
+                className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Board
+              </Link>
+              <Link 
+                href={`/${slug}/activity`}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-slate-800 rounded"
+              >
+                Activity
+              </Link>
+              <Link 
+                href={`/${slug}/settings`}
+                className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Settings
+              </Link>
+            </nav>
+
+            {currentUser && (
+              <>
+                <div className="h-6 w-px bg-slate-700" />
+                <Link 
+                  href="/settings/profile"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  title="Profile settings"
+                >
+                  {(currentUser as User).avatar_url ? (
+                    <img 
+                      src={(currentUser as User).avatar_url!} 
+                      alt={(currentUser as User).name} 
+                      className="w-7 h-7 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium">
+                      {(currentUser as User).name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm text-slate-300">{(currentUser as User).name}</span>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

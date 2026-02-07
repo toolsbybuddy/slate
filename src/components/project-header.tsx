@@ -73,17 +73,24 @@ export function ProjectHeader({ project, currentUser }: ProjectHeaderProps) {
 
           {currentUser && (
             <div className="flex items-center gap-3">
-              {currentUser.avatar_url ? (
-                <img 
-                  src={currentUser.avatar_url} 
-                  alt={currentUser.name} 
-                  className="w-7 h-7 rounded-full"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium">
-                  {currentUser.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <Link 
+                href="/settings/profile"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                title="Profile settings"
+              >
+                {currentUser.avatar_url ? (
+                  <img 
+                    src={currentUser.avatar_url} 
+                    alt={currentUser.name} 
+                    className="w-7 h-7 rounded-full"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm text-slate-300">{currentUser.name}</span>
+              </Link>
               <button 
                 onClick={handleSignOut}
                 className="text-slate-400 hover:text-white text-sm"
